@@ -8,8 +8,8 @@ def get_model_baseline(signals_loc, ohlc_loc, holding_duration):
 
     ohlc['entry_price'] = ohlc['close']
     ohlc['exit_price'] = ohlc['close'].shift(-holding_duration)
-    ohlc['long_r'] = (ohlc['exit_price']-ohlc['entry_price'])/ohlc['entry_price']-0.003 # Minus 0.3% due to fees and slippage on average
-    ohlc['short_r'] = (ohlc['entry_price']-ohlc['exit_price'])/ohlc['entry_price']-0.003
+    ohlc['long_r'] = (ohlc['exit_price']-ohlc['entry_price'])/ohlc['entry_price']
+    ohlc['short_r'] = (ohlc['entry_price']-ohlc['exit_price'])/ohlc['entry_price']
 
     signals = signals.merge(ohlc, how='left', on='time')
     signals['r'] = np.where(signals['side']=='LONG', signals['long_r'], signals['short_r'])
