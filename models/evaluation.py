@@ -1,3 +1,6 @@
+import numpy as np
+import pandas as pd
+
 def get_model_baseline(signals_loc, ohlc_loc, holding_duration):
     """
     Returns a baseline metric for model based signals generated every tick/second/minute/hour/day
