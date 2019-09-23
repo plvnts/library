@@ -8,3 +8,6 @@ def standard_scaler(data, split=0.55):
 
 def sigmoid_scaler(data):
     return 1/(1+np.exp(-data))
+
+def logit_scaler(data, b):
+    return 1/(1+(data/(1-data))**-b)

@@ -5,6 +5,9 @@ def sigmoid(x, derivative=False):
         return x * (1 - x)
     return 1 / (1 + np.exp(-x))
 
+def logit_sigmoid(x, b, derivative=False):
+    return 1 / (1 + (x/(1-x)) ** -b)
+
 def tanh(x, derivative=False):
     if (derivative == True):
         return (1 - (x ** 2))
