@@ -3,6 +3,19 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from statsmodels.tsa.stattools import adfuller
 
+# https://github.com/philipperemy/fractional-differentiation-time-series/blob/master/fracdiff/fracdiff.py
+def fast_fracdiff(x, d):
+    import pylab as pl
+    T = len(x)
+    np2 = int(2 ** np.ceil(np.log2(2 * T - 1)))
+    k = np.arange(1, T)
+    b = (1,) + tuple(np.cumprod((k - d - 1) / k))
+    z = (0,) * (np2 - T)
+    z1 = b + z
+    z2 = tuple(x) + z
+    dx = pl.ifft(pl.fft(z1) * pl.fft(z2))
+    return np.real(dx[0:T])
+
 def frac_diff(series, d, thres=.01):
     """
     Increasing width window, with treatment of NaNs
