@@ -2,10 +2,10 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from statsmodels.tsa.stattools import adfuller
+import pylab as pl
 
 # https://github.com/philipperemy/fractional-differentiation-time-series/blob/master/fracdiff/fracdiff.py
 def fast_fracdiff(x, d):
-    import pylab as pl
     T = len(x)
     np2 = int(2 ** np.ceil(np.log2(2 * T - 1)))
     k = np.arange(1, T)
