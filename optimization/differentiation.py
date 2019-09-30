@@ -13,7 +13,7 @@ def fast_fracdiff(x, d):
     z = (0,) * (np2 - T)
     z1 = b + z
     z2 = tuple(x) + z
-    dx = pl.ifft(pl.fft(z1) * pl.fft(z2))
+    dx = np.fft.ifft(np.fft.fft(z1) * np.fft.fft(z2))
     return np.real(dx[0:T])
 
 def frac_diff(series, d, thres=.01):
