@@ -1,23 +1,7 @@
 import numpy as np
-
-def dist_1d_normalized(X, y):
-    """
-    Calculates distances between two 1d vectors
-    Normalizes data
-    """
-    X_vals = X/np.max(np.abs(X))
-    X_vals[np.isnan(X_vals)] = 0
-    X_vals[np.isinf(X_vals)] = 0
-    y_vals = y/np.max(np.abs(y))
-    y_vals[np.isnan(y_vals)] = 0
-    y_vals[np.isinf(y_vals)] = 0
-    return np.mean(np.abs(X_vals-y_vals))
+import pandas as pd
 
 def dist_1d_standardized(X, y):
-    """
-    Calculates log distances between two 1d vectors
-    Standardizes data
-    """
     X_vals = (X-np.mean(X))/np.std(X)
     X_vals[np.isnan(X_vals)] = 0
     X_vals[np.isinf(X_vals)] = 0
@@ -25,32 +9,6 @@ def dist_1d_standardized(X, y):
     y_vals[np.isnan(y_vals)] = 0
     y_vals[np.isinf(y_vals)] = 0
     return np.mean(np.abs(X_vals-y_vals))
-
-def dist_2d_normalized(X, y):
-    """
-    Calculates distances between 2d vectors and 1d vectors along horizontal axis
-    Normalizes data
-    """
-    X_vals = (X/np.max(np.abs(X), axis=0)).T
-    X_vals[np.isnan(X_vals)] = 0
-    X_vals[np.isinf(X_vals)] = 0
-    y_vals = y/np.max(np.abs(y), axis=0)
-    y_vals[np.isnan(y_vals)] = 0
-    y_vals[np.isinf(y_vals)] = 0
-    return np.mean(np.abs(X_vals-y_vals).T, axis=0)
-
-def dist_2d_standardized(X, y):
-    """
-    Calculates distances between 2d vectors and 1d vectors along horizontal axis
-    Standardizes data
-    """
-    X_vals = ((X-np.mean(X, axis=0))/np.std(X, axis=0)).T
-    X_vals[np.isnan(X_vals)] = 0
-    X_vals[np.isinf(X_vals)] = 0
-    y_vals = (y-np.mean(y, axis=0))/np.std(y, axis=0)
-    y_vals[np.isnan(y_vals)] = 0
-    y_vals[np.isinf(y_vals)] = 0
-    return np.mean(np.abs(X_vals-y_vals).T, axis=0)
 
 def ranks_rolling_1d(x, window):
     """
@@ -75,3 +33,27 @@ def corr_obj(y_true, y_pred, noise_cutoff=0.5):
 
 def dist_obj(y_true, y_pred):
     return 1/dist_1d_standardized(y_true, y_pred)
+
+def baseline_obj(signals_loc, ohlc_loc, period=50, noise_cutoff=0.5):
+    ohlc = joblib.load(ohlc_loc)[['close']]
+    ohlc['entry_price'] = ohlc['close']
+    ohlc['exit_price'] = ohlc['close'].shift(-period)
+    ohlc['long_r'] = (ohlc['exit_price']-ohlc['entry_price'])/ohlc['entry_price']
+    ohlc['short_r'] = (ohlc['entry_price']-ohlc['exit_price'])/ohlc['entry_price']
+
+    signals_df = joblib.load(signals_loc)
+    signals_df['time'] = signals_df['time'].dt.tz_localize(None).shift(-1)
+    signals_df = signals_df.merge(ohlc, how='left', left_on='time', right_index=True)
+    signals_df = signals_df[signals_df['percentile']>noise_cutoff]
+
+    signals_df['cr'] = np.where(signals_df['tpred']>=0, signals_df['long_r'], signals_df['short_r'])
+    signals_df['cr'] = signals_df['cr']*signals_df['percentile']
+    combined_metric = np.sum(signals_df['cr'])/len(signals_df)*1000
+    signals_df['rl'] = np.where(signals_df['tpred']>=0, signals_df['long_r'], 0)
+    signals_df['rl'] = signals_df['rl']*signals_df['percentile']
+    long_metric = np.sum(signals_df['rl'])/len(signals_df)*1000
+    signals_df['sr'] = np.where(signals_df['tpred']>=0, 0, signals_df['short_r'])
+    signals_df['sr'] = signals_df['sr']*signals_df['percentile']
+    short_metric = np.sum(signals_df['sr'])/len(signals_df)*1000
+
+    return combined_metric, long_metric, short_metric
