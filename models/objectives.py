@@ -40,6 +40,8 @@ def baseline_obj(signals_loc, ohlc_loc, period=50, noise_cutoff=0.5, plot=True):
     ohlc['exit_price'] = ohlc['close'].shift(-period)
     ohlc['long_r'] = (ohlc['exit_price']-ohlc['entry_price'])/ohlc['entry_price']
     ohlc['short_r'] = (ohlc['entry_price']-ohlc['exit_price'])/ohlc['entry_price']
+    ohlc['long_r'] = (ohlc['long_r']-np.mean(ohlc['long_r']))/np.std(ohlc['long_r'])
+    ohlc['short_r'] = (ohlc['short_r']-np.mean(ohlc['short_r']))/np.std(ohlc['short_r'])
 
     signals_df = joblib.load(signals_loc)
     signals_df['time'] = signals_df['time'].dt.tz_localize(None).shift(-1)
