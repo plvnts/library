@@ -34,7 +34,7 @@ def corr_obj(y_true, y_pred, noise_cutoff=0.5):
 def dist_obj(y_true, y_pred):
     return 1/dist_1d_standardized(y_true, y_pred)
 
-def baseline_obj(signals_loc, ohlc_loc, period=50, noise_cutoff=0.5):
+def baseline_obj(signals_loc, ohlc_loc, period=50, noise_cutoff=0.5, plot=True):
     ohlc = joblib.load(ohlc_loc)[['close']]
     ohlc['entry_price'] = ohlc['close']
     ohlc['exit_price'] = ohlc['close'].shift(-period)
@@ -45,6 +45,7 @@ def baseline_obj(signals_loc, ohlc_loc, period=50, noise_cutoff=0.5):
     signals_df['time'] = signals_df['time'].dt.tz_localize(None).shift(-1)
     signals_df = signals_df.merge(ohlc, how='left', left_on='time', right_index=True)
     signals_df = signals_df[signals_df['percentile']>noise_cutoff]
+    signals_df.fillna(0, inplace=True)
 
     signals_df['cr'] = np.where(signals_df['tpred']>=0, signals_df['long_r'], signals_df['short_r'])
     signals_df['cr'] = signals_df['cr']*signals_df['percentile']
@@ -56,4 +57,7 @@ def baseline_obj(signals_loc, ohlc_loc, period=50, noise_cutoff=0.5):
     signals_df['sr'] = signals_df['sr']*signals_df['percentile']
     short_metric = np.sum(signals_df['sr'])/len(signals_df)*1000
 
+    if plot:
+        sns.set(rc={'figure.figsize':(16,8)})
+        sns.lineplot(x=np.arange(len(signals_df))[::100], y=np.cumsum(signals_df['cr'])[::100])
     return combined_metric, long_metric, short_metric
