@@ -27,12 +27,7 @@ def ranks_rolling_2d(X, window):
     """
     results = np.zeros(X.shape)
     for c in np.arange(X.shape[1]):
-        x = np.pad(X[:,c], (window-1, 0), 'constant') # Pad with window-1
-        shape = x.shape[:-1] + (x.shape[-1] - window + 1, window)
-        strides = x.strides + (x.strides[-1],)
-        vals = np.lib.stride_tricks.as_strided(x, shape=shape, strides=strides)
-        ranks = vals.argsort(kind='mergesort', axis=1).argsort(kind='mergesort', axis=1)
-        results[:,c] = ranks[:,-1]/window+1/window
+        results[:,c] = ranks_rolling_1d(X[:,c], window)
     return results
 
 def rank_obj(y_true, y_pred, window=500, noise_cutoff=0.5):
